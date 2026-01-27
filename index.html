@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#6366f1">
+    <title>Mola Takip</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .current-time {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .countdown {
+            text-align: center;
+            padding: 30px 20px;
+        }
+        
+        .countdown-label {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        
+        .countdown-time {
+            font-size: 3em;
+            font-weight: bold;
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+        
+        .next-break {
+            font-size: 1.1em;
+            color: #374151;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        .status.break {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status.meeting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status.work {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .schedule {
+            margin-top: 20px;
+        }
+        
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            background: #f9fafb;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .schedule-item.active {
+            background: #eef2ff;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .schedule-item.passed {
+            opacity: 0.5;
+        }
+        
+        .schedule-time {
+            font-weight: 600;
+            color: #6366f1;
+            min-width: 80px;
+            font-size: 0.9em;
+        }
+        
+        .schedule-label {
+            flex: 1;
+            color: #374151;
+            cursor: pointer;
+        }
+        
+        .icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .edit-btn, .delete-btn {
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .edit-btn {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .delete-btn {
+            background: #fee;
+            color: #dc2626;
+        }
+        
+        .day-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+        
+        .day-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 20px;
+            background: white;
+            color: #6366f1;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .day-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .settings-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        
+        .alert-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 2000;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .alert-message.show {
+            display: block;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-message" id="alertMessage"></div>
+    <button class="settings-icon" onclick="showSettings()">⚙️</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>⏰ Mola Takip</h1>
+            <div class="current-time" id="currentTime"></div>
+        </div>
+        
+        <div class="card countdown">
+            <div class="countdown-label" id="countdownLabel">Bir sonraki</div>
+            <div class="countdown-time" id="countdownTime">--:--</div>
+            <div class="next-break" id="nextBreak"></div>
+            <div class="status" id="currentStatus"></div>
+        </div>
+        
+        <div class="card">
+            <button class="btn btn-primary" id="notificationBtn" onclick="requestNotificationPermission()">🔔 Bildirimleri Aç</button>
+            <button class="btn btn-secondary" onclick="testNotification()">🧪 Bildirimi Test Et</button>
+            <button class="btn btn-secondary" onclick="showAddModal()">➕ Yeni Etkinlik Ekle</button>
+        </div>
+        
+        <div class="card">
+            <div class="day-selector" id="daySelector"></div>
+            <div class="schedule" id="schedule"></div>
+        </div>
+    </div>
+
+    <!-- Ayarlar Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">⚙️ Ayarlar</div>
+            <div class="form-group">
+                <label>Bildirim Zamanı</label>
+                <select id="notificationTime">
+                    <option value="0">Tam zamanında</option>
+                    <option value="1" selected>1 dakika önce</option>
+                    <option value="5">5 dakika önce</option>
+                    <option value="10">10 dakika önce</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="hideSettings()" style="flex: 1;">İptal</button>
+                <button class="btn btn-primary" onclick="saveSettings()" style="flex: 1;">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Etkinlik Ekleme/Düzenleme Modal -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header" id="eventModalTitle">➕ Yeni Etkinlik</div>
+            <div class="form-group">
+                <label>Etkinlik Adı</label>
+                <input type="text" id="eventName" placeholder="Örn: Kahve Molası">
+            </div>
+            <div class="form-group">
+                <label>Başlangıç Saati</label>
+                <input type="time" id="eventTime">
+            </div>
+            <div class="form-group">
+                <label>Süre (dakika)</label>
+                <input type="number" id="eventDuration" value="10" min="1">
+            </div>
+            <div class="form-group">
+                <label>Tür</label>
+                <select id="eventType">
+                    <option value="break">Mola</option>
+                    <option value="meeting">Toplantı</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hangi Günler?</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="day1" value="1">
+                        <label for="day1">Pzt</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="day2" value="2">
+                        <label for="day2">Sal</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="day3" value="3">
+                        <label for="day3">Çar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="day4" value="4">
+                        <label for="day4">Per</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="day5" value="5">
+                        <label for="day5">Cum</label>
+                    </div>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="hideEventModal()" style="flex: 1;">İptal</button>
+                <button class="btn btn-danger" id="deleteEventBtn" onclick="confirmDelete()" style="display: none; flex: 1;">Sil</button>
+                <button class="btn btn-primary" id="saveEventBtn" onclick="saveEvent()" style="flex: 1;">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dayNames = ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+        
+        let schedules = {
+            1: [
+                { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
+                { id: 2, time: '10:15', label: 'Teknik Toplantı', type: 'meeting', duration: 45 },
+                { id: 3, time: '11:00', label: 'Sabah Molası', type: 'break', duration: 10 },
+                { id: 4, time: '12:30', label: 'Öğle Yemeği', type: 'break', duration: 45 },
+                { id: 5, time: '15:00', label: 'Öğleden Sonra Molası', type: 'break', duration: 10 }
+            ],
+            2: [
+                { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
+                { id: 6, time: '10:05', label: 'Sabah Molası', type: 'break', duration: 10 },
+                { id: 4, time: '12:30', label: 'Öğle Yemeği', type: 'break', duration: 45 },
+                { id: 5, time: '15:00', label: 'Öğleden Sonra Molası', type: 'break', duration: 10 }
+            ],
+            3: [
+                { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
+                { id: 6, time: '10:05', label: 'Sabah Molası', type: 'break', duration: 10 },
+                { id: 4, time: '12:30', label: 'Öğle Yemeği', type: 'break', duration: 45 },
+                { id: 5, time: '15:00', label: 'Öğleden Sonra Molası', type: 'break', duration: 10 }
+            ],
+            4: [
+                { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
+                { id: 2, time: '10:15', label: 'Teknik Toplantı', type: 'meeting', duration: 45 },
+                { id: 3, time: '11:00', label: 'Sabah Molası', type: 'break', duration: 10 },
+                { id: 4, time: '12:30', label: 'Öğle Yemeği', type: 'break', duration: 45 },
+                { id: 5, time: '15:00', label: 'Öğleden Sonra Molası', type: 'break', duration: 10 }
+            ],
+            5: [
+                { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
+                { id: 6, time: '10:05', label: 'Sabah Molası', type: 'break', duration: 10 },
+                { id: 4, time: '12:30', label: 'Öğle Yemeği', type: 'break', duration: 45 },
+                { id: 5, time: '15:00', label: 'Öğleden Sonra Molası', type: 'break', duration: 10 }
+            ]
+        };
+
+        let settings = {
+            notificationTime: 1
+        };
+
+        let notificationPermission = false;
+        let lastNotifiedBreak = null;
+        let selectedDay = new Date().getDay();
+        let editingEventId = null;
+        let nextEventId = 100;
+
+        function showAlert(message) {
+            const alertEl = document.getElementById('alertMessage');
+            alertEl.textContent = message;
+            alertEl.classList.add('show');
+            setTimeout(() => {
+                alertEl.classList.remove('show');
+            }, 3000);
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('molaSettings');
+            if (saved) {
+                settings = JSON.parse(saved);
+                document.getElementById('notificationTime').value = settings.notificationTime;
+            }
+            
+            const savedSchedules = localStorage.getItem('molaSchedules');
+            if (savedSchedules) {
+                schedules = JSON.parse(savedSchedules);
+            }
+
+            const savedNextId = localStorage.getItem('molaNextId');
+            if (savedNextId) {
+                nextEventId = parseInt(savedNextId);
+            }
+        }
+
+        function saveSettings() {
+            settings.notificationTime = parseInt(document.getElementById('notificationTime').value);
+            localStorage.setItem('molaSettings', JSON.stringify(settings));
+            hideSettings();
+        }
+
+        function saveSchedules() {
+            localStorage.setItem('molaSchedules', JSON.stringify(schedules));
+            localStorage.setItem('molaNextId', nextEventId.toString());
+        }
+
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function showAddModal() {
+            editingEventId = null;
+            document.getElementById('eventModalTitle').textContent = '➕ Yeni Etkinlik';
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventTime').value = '';
+            document.getElementById('eventDuration').value = '10';
+            document.getElementById('eventType').value = 'break';
+            document.getElementById('deleteEventBtn').style.display = 'none';
+            
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`day${i}`).checked = true;
+            }
+            
+            document.getElementById('eventModal').classList.add('show');
+        }
+
+        function showEditModal(eventId) {
+            editingEventId = eventId;
+            document.getElementById('eventModalTitle').textContent = '✏️ Etkinliği Düzenle';
+            
+            let eventData = null;
+            const activeDays = [];
+            
+            for (let day = 1; day <= 5; day++) {
+                const event = schedules[day]?.find(e => e.id === eventId);
+                if (event) {
+                    eventData = event;
+                    activeDays.push(day);
+                }
+            }
+            
+            if (eventData) {
+                document.getElementById('eventName').value = eventData.label;
+                document.getElementById('eventTime').value = eventData.time;
+                document.getElementById('eventDuration').value = eventData.duration;
+                document.getElementById('eventType').value = eventData.type;
+                
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById(`day${i}`).checked = activeDays.includes(i);
+                }
+                
+                document.getElementById('deleteEventBtn').style.display = 'block';
+            }
+            
+            document.getElementById('eventModal').classList.add('show');
+        }
+
+        function hideEventModal() {
+            document.getElementById('eventModal').classList.remove('show');
+            editingEventId = null;
+        }
+
+        function saveEvent() {
+            const name = document.getElementById('eventName').value.trim();
+            const time = document.getElementById('eventTime').value;
+            const duration = parseInt(document.getElementById('eventDuration').value);
+            const type = document.getElementById('eventType').value;
+            
+            if (!name || !time) {
+                showAlert('⚠️ Lütfen tüm alanları doldurun');
+                return;
+            }
+
+            const selectedDays = [];
+            for (let i = 1; i <= 5; i++) {
+                if (document.getElementById(`day${i}`).checked) {
+                    selectedDays.push(i);
+                }
+            }
+
+            if (selectedDays.length === 0) {
+                showAlert('⚠️ En az bir gün seçmelisiniz');
+                return;
+            }
+
+            if (editingEventId !== null) {
+                for (let day = 1; day <= 5; day++) {
+                    if (!schedules[day]) continue;
+                    schedules[day] = schedules[day].filter(e => e.id !== editingEventId);
+                }
+            }
+
+            const eventId = editingEventId || nextEventId++;
+            const newEvent = { id: eventId, time, label: name, type, duration };
+            
+            for (let day of selectedDays) {
+                if (!schedules[day]) schedules[day] = [];
+                schedules[day].push({...newEvent});
+                schedules[day].sort((a, b) => a.time.localeCompare(b.time));
+            }
+            
+            saveSchedules();
+            hideEventModal();
+            renderDaySelector();
+            renderSchedule(selectedDay);
+        }
+
+        function confirmDelete() {
+            if (confirm('Bu etkinliği tüm günlerden silmek istediğinize emin misiniz?')) {
+                for (let day = 1; day <= 5; day++) {
+                    if (!schedules[day]) continue;
+                    schedules[day] = schedules[day].filter(e => e.id !== editingEventId);
+                }
+                saveSchedules();
+                hideEventModal();
+                renderDaySelector();
+                renderSchedule(selectedDay);
+                showAlert('✅ Etkinlik silindi');
+            }
+        }
+
+        function getTodaySchedule(day = new Date().getDay()) {
+            return schedules[day] || [];
+        }
+
+        function parseTime(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }) + 
+                ' - ' + formatTime(now);
+        }
+
+        function getNextBreak() {
+            const now = new Date();
+            const schedule = getTodaySchedule();
+            
+            for (let item of schedule) {
+                const breakTime = parseTime(item.time);
+                const endTime = new Date(breakTime.getTime() + item.duration * 60000);
+                
+                if (now < breakTime) {
+                    return { item, breakTime, isActive: false };
+                }
+                if (now >= breakTime && now < endTime) {
+                    return { item, breakTime, isActive: true, endTime };
+                }
+            }
+            return null;
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const next = getNextBreak();
+            
+            if (!next) {
+                document.getElementById('countdownTime').textContent = 'Gün Bitti';
+                document.getElementById('nextBreak').textContent = 'Güzel çalıştın! 🎉';
+                document.getElementById('currentStatus').textContent = 'İş Saati Dışı';
+                document.getElementById('currentStatus').className = 'status work';
+                return;
+            }
+
+            const { item, breakTime, isActive, endTime } = next;
+            
+            if (isActive) {
+                const diff = endTime - now;
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                
+                document.getElementById('countdownLabel').textContent = 
+                    item.type === 'meeting' ? 'Toplantı bitiyor' : 'Mola bitiyor';
+                document.getElementById('countdownTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('nextBreak').textContent = item.label;
+                document.getElementById('currentStatus').textContent = 
+                    item.type === 'break' ? '☕ Mola Zamanı' : '📋 Toplantıdasın';
+                document.getElementById('currentStatus').className = `status ${item.type}`;
+            } else {
+                const diff = breakTime - now;
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                
+                document.getElementById('countdownLabel').textContent = 'Bir sonraki';
+                document.getElementById('countdownTime').textContent = 
+                    hours > 0 
+                        ? `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                        : `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('nextBreak').textContent = item.label + ' - ' + item.time;
+                document.getElementById('currentStatus').textContent = '💼 Çalışma Zamanı';
+                document.getElementById('currentStatus').className = 'status work';
+                
+                const notifTime = settings.notificationTime * 60000;
+                if (notificationPermission && diff <= notifTime && diff > (notifTime - 5000)) {
+                    const key = `${item.time}-${item.label}-${new Date().toDateString()}`;
+                    if (lastNotifiedBreak !== key) {
+                        showNotification(item);
+                        lastNotifiedBreak = key;
+                    }
+                }
+            }
+        }
+
+        function showNotification(item) {
+            if (!notificationPermission) return;
+            
+            try {
+                const msg = settings.notificationTime > 0 
+                    ? `${settings.notificationTime} dakika sonra ${item.label} başlıyor`
+                    : `${item.label} başlıyor`;
+                
+                const notification = new Notification('⏰ Mola Zamanı!', {
+                    body: msg + ` (${item.duration} dk)`,
+                    icon: item.type === 'break' ? '☕' : '📋',
+                    requireInteraction: false,
+                    silent: false,
+                    tag: 'mola-notification-' + Date.now(),
+                    vibrate: [200, 100, 200]
+                });
+                
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+                
+                setTimeout(() => notification.close(), 10000);
+                
+                console.log('Bildirim gönderildi:', msg);
+            } catch (e) {
+                console.error('Bildirim gösterilemedi:', e);
+            }
+        }
+
+        function renderSchedule(day) {
+            selectedDay = day;
+            const now = new Date();
+            const currentDay = now.getDay();
+            const schedule = getTodaySchedule(day);
+            const scheduleEl = document.getElementById('schedule');
+            
+            if (schedule.length === 0) {
+                scheduleEl.innerHTML = '<p style="text-align: center; color: #9ca3af;">Bu gün için etkinlik yok</p>';
+                return;
+            }
+            
+            scheduleEl.innerHTML = schedule.map((item) => {
+                const itemTime = parseTime(item.time);
+                const endTime = new Date(itemTime.getTime() + item.duration * 60000);
+                const isPassed = day === currentDay && now > endTime;
+                const isActive = day === currentDay && now >= itemTime && now < endTime;
+                
+                const icon = item.type === 'break' ? '☕' : '📋';
+                
+                return `
+                    <div class="schedule-item ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''}">
+                        <span class="icon">${icon}</span>
+                        <span class="schedule-time">${item.time}</span>
+                        <span class="schedule-label" onclick="showEditModal(${item.id})">${item.label} (${item.duration} dk)</span>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="showEditModal(${item.id})">✏️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDaySelector() {
+            const selector = document.getElementById('daySelector');
+            const today = new Date().getDay();
+            
+            selector.innerHTML = [1, 2, 3, 4, 5].map(day => {
+                const isToday = day === today;
+                const hasSchedule = schedules[day] && schedules[day].length > 0;
+                return `
+                    <button class="day-btn ${day === selectedDay ? 'active' : ''}" 
+                            onclick="renderSchedule(${day})">
+                        ${dayNames[day]} ${isToday ? '(Bugün)' : ''} ${hasSchedule ? `(${schedules[day].length})` : ''}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showAlert('⚠️ Tarayıcınız bildirimleri desteklemiyor');
+                return;
+            }
+            
+            console.log('Mevcut bildirim durumu:', Notification.permission);
+            
+            if (Notification.permission === 'granted') {
+                notificationPermission = true;
+                document.getElementById('notificationBtn').textContent = '✅ Bildirimler Açık';
+                showAlert('✅ Bildirimler zaten açık!');
+                return;
+            }
+            
+            if (Notification.permission === 'denied') {
+                showAlert('⚠️ Bildirimler engellenmiş. Tarayıcı ayarlarından manuel olarak "İzin ver" seçmelisiniz.');
+                return;
+            }
+            
+            Notification.requestPermission().then(permission => {
+                console.log('Yeni izin durumu:', permission);
+                if (permission === 'granted') {
+                    notificationPermission = true;
+                    document.getElementById('notificationBtn').textContent = '✅ Bildirimler Açık';
+                    document.getElementById('notificationBtn').disabled = true;
+                    
+                    try {
+                        new Notification('Harika! 🎉', {
+                            body: 'Bildirimler başarıyla açıldı!'
+                        });
+                    } catch (e) {
+                        console.log('Test bildirimi gönderilemedi:', e);
+                        showAlert('✅ Bildirimler açıldı!');
+                    }
+                } else if (permission === 'denied') {
+                    showAlert('❌ Bildirim izni reddedildi.');
+                } else {
+                    showAlert('⚠️ Bildirim izni beklemede.');
+                }
+            }).catch(err => {
+                console.error('Bildirim izni hatası:', err);
+                showAlert('⚠️ Hata: ' + err.message);
+            });
+        }
+
+        function testNotification() {
+            console.log('Test bildirimi gönderiliyor...');
+            console.log('Notification.permission:', Notification.permission);
+            console.log('notificationPermission:', notificationPermission);
+            
+            try {
+                if (Notification.permission !== 'granted') {
+                    showAlert('⚠️ Önce bildirimleri açmalısınız veya tarayıcı ayarlarından izin vermelisiniz');
+                    return;
+                }
+                
+                const notification = new Notification('🧪 Test Bildirimi', {
+                    body: 'Bildirimler çalışıyor! Bu bir test mesajıdır.',
+                    icon: '⏰',
+                    requireInteraction: false,
+                    silent: false,
+                    tag: 'test-' + Date.now()
+                });
+                
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                    showAlert('✅ Bildirime tıkladınız!');
+                };
+                
+                showAlert('✅ Test bildirimi gönderildi!');
+                console.log('Test bildirimi başarılı');
+            } catch (e) {
+                console.error('Test bildirimi hatası:', e);
+                showAlert('❌ Hata: ' + e.message);
+            }
+        }
+
+        loadSettings();
+        renderDaySelector();
+        renderSchedule(selectedDay);
+        updateCurrentTime();
+        updateCountdown();
+        
+        setInterval(updateCurrentTime, 1000);
+        setInterval(updateCountdown, 1000);
+        setInterval(() => {
+            const today = new Date().getDay();
+            if (selectedDay === today) {
+                renderSchedule(today);
+            }
+        }, 60000);
+
+        if ('Notification' in window) {
+            console.log('Tarayıcı bildirimleri destekliyor');
+            console.log('İzin durumu:', Notification.permission);
+            
+            if (Notification.permission === 'granted') {
+                notificationPermission = true;
+                document.getElementById('notificationBtn').textContent = '✅ Bildirimler Açık';
+                document.getElementById('notificationBtn').disabled = true;
+                console.log('Bildirimler hazır, izin: granted');
+            } else if (Notification.permission === 'denied') {
+                document.getElementById('notificationBtn').textContent = '⚠️ İzin Engellendi';
+                console.log('Bildirimler engellendi - tarayıcı ayarlarından "İzin ver" seçmelisiniz');
+            } else {
+                console.log('Bildirim izni henüz verilmedi, butona tıklayın');
+            }
+        } else {
+            console.log('Tarayıcı bildirimleri desteklemiyor');
+        }
+    </script>
+</body>
+</html>
