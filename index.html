@@ -467,6 +467,15 @@
     <script>
         const dayNames = ['Pzr', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
         
+        // Service Worker kaydet
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/molatakip/sw.js').then(registration => {
+                console.log('Service Worker kayıtlı:', registration);
+            }).catch(err => {
+                console.log('Service Worker hatası:', err);
+            });
+        }
+        
         let schedules = {
             1: [
                 { id: 1, time: '09:45', label: 'Günlük Toplantı', type: 'meeting', duration: 20 },
@@ -770,21 +779,33 @@
                     ? `${settings.notificationTime} dakika sonra ${item.label} başlıyor`
                     : `${item.label} başlıyor`;
                 
-                const notification = new Notification('⏰ Mola Zamanı!', {
-                    body: msg + ` (${item.duration} dk)`,
-                    icon: item.type === 'break' ? '☕' : '📋',
-                    requireInteraction: false,
-                    silent: false,
-                    tag: 'mola-notification-' + Date.now(),
-                    vibrate: [200, 100, 200]
-                });
-                
-                notification.onclick = function() {
-                    window.focus();
-                    notification.close();
-                };
-                
-                setTimeout(() => notification.close(), 10000);
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification('⏰ Mola Zamanı!', {
+                            body: msg + ` (${item.duration} dk)`,
+                            icon: 'https://enginardic.github.io/molatakip/favicon.ico',
+                            badge: 'https://enginardic.github.io/molatakip/favicon.ico',
+                            vibrate: [200, 100, 200],
+                            tag: 'mola-notification-' + Date.now(),
+                            requireInteraction: false
+                        });
+                    });
+                } else {
+                    const notification = new Notification('⏰ Mola Zamanı!', {
+                        body: msg + ` (${item.duration} dk)`,
+                        requireInteraction: false,
+                        silent: false,
+                        tag: 'mola-notification-' + Date.now(),
+                        vibrate: [200, 100, 200]
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+                    
+                    setTimeout(() => notification.close(), 10000);
+                }
                 
                 console.log('Bildirim gönderildi:', msg);
             } catch (e) {
@@ -887,30 +908,38 @@
             });
         }
 
-        function testNotification() {
+        async function testNotification() {
             console.log('Test bildirimi gönderiliyor...');
             console.log('Notification.permission:', Notification.permission);
             console.log('notificationPermission:', notificationPermission);
             
             try {
                 if (Notification.permission !== 'granted') {
-                    showAlert('⚠️ Önce bildirimleri açmalısınız veya tarayıcı ayarlarından izin vermelisiniz');
+                    showAlert('⚠️ Önce bildirimleri açmalısınız');
                     return;
                 }
                 
-                const notification = new Notification('🧪 Test Bildirimi', {
-                    body: 'Bildirimler çalışıyor! Bu bir test mesajıdır.',
-                    icon: '⏰',
-                    requireInteraction: false,
-                    silent: false,
-                    tag: 'test-' + Date.now()
-                });
-                
-                notification.onclick = function() {
-                    window.focus();
-                    notification.close();
-                    showAlert('✅ Bildirime tıkladınız!');
-                };
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification('🧪 Test Bildirimi', {
+                        body: 'Bildirimler çalışıyor! Bu bir test mesajıdır.',
+                        icon: 'https://enginardic.github.io/molatakip/favicon.ico',
+                        badge: 'https://enginardic.github.io/molatakip/favicon.ico',
+                        vibrate: [200, 100, 200],
+                        tag: 'test-' + Date.now()
+                    });
+                } else {
+                    const notification = new Notification('🧪 Test Bildirimi', {
+                        body: 'Bildirimler çalışıyor!',
+                        vibrate: [200, 100, 200],
+                        tag: 'test-' + Date.now()
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+                }
                 
                 showAlert('✅ Test bildirimi gönderildi!');
                 console.log('Test bildirimi başarılı');
