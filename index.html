@@ -96,6 +96,108 @@
             color: #1e40af;
         }
         
+        .status.pomodoro {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .timer-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .timer-btn.extend {
+            background: #fbbf24;
+            color: #78350f;
+        }
+        
+        .timer-btn.skip {
+            background: #f87171;
+            color: #7f1d1d;
+        }
+        
+        .timer-btn.start {
+            background: #34d399;
+            color: #065f46;
+        }
+        
+        .timer-btn.postpone {
+            background: #a78bfa;
+            color: #4c1d95;
+        }
+        
+        .timer-btn.skip-next {
+            background: #fb923c;
+            color: #7c2d12;
+        }
+        
+        .calendar-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+        }
+        
+        .calendar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+        
+        .calendar-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .calendar-btn.connected {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .pomodoro-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #6366f1;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        
         .schedule {
             margin-top: 20px;
         }
@@ -374,12 +476,37 @@
             <div class="countdown-time" id="countdownTime">--:--</div>
             <div class="next-break" id="nextBreak"></div>
             <div class="status" id="currentStatus"></div>
+            <div class="timer-controls" id="timerControls"></div>
+            <div class="pomodoro-stats" id="pomodoroStats" style="display: none;">
+                <div class="stat-item">
+                    <div class="stat-value" id="pomodoroCount">0</div>
+                    <div class="stat-label">🍅 Bugün</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalWorkTime">0dk</div>
+                    <div class="stat-label">⏱️ Çalışma</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalBreakTime">0dk</div>
+                    <div class="stat-label">☕ Mola</div>
+                </div>
+            </div>
         </div>
         
         <div class="card">
             <button class="btn btn-primary" id="notificationBtn" onclick="requestNotificationPermission()">🔔 Bildirimleri Aç</button>
             <button class="btn btn-secondary" onclick="testNotification()">🧪 Bildirimi Test Et</button>
+            <button class="btn btn-secondary" id="pomodoroBtn" onclick="togglePomodoro()">🍅 Pomodoro Başlat</button>
             <button class="btn btn-secondary" onclick="showAddModal()">➕ Yeni Etkinlik Ekle</button>
+            
+            <div class="calendar-section">
+                <button class="calendar-btn" id="calendarBtn" onclick="connectCalendar()">
+                    📅 Google Calendar'a Bağlan
+                </button>
+                <button class="calendar-btn" id="exportBtn" onclick="exportToCalendar()" style="display: none; margin-top: 10px;">
+                    📤 Bu Haftayı Takvime Aktar
+                </button>
+            </div>
         </div>
         
         <div class="card">
@@ -520,6 +647,25 @@
         let selectedDay = new Date().getDay();
         let editingEventId = null;
         let nextEventId = 100;
+        
+        // Pomodoro durumu
+        let pomodoroActive = false;
+        let pomodoroTimer = null;
+        let pomodoroEndTime = null;
+        let pomodoroStats = {
+            count: 0,
+            workTime: 0,
+            breakTime: 0,
+            lastReset: new Date().toDateString()
+        };
+        
+        // Mola uzatma ve atlama
+        let extendedBreakTime = 0;
+        let skippedBreaks = new Set();
+        let postponedBreaks = {};
+        
+        // Google Calendar
+        let calendarConnected = false;
 
         function showAlert(message) {
             const alertEl = document.getElementById('alertMessage');
@@ -546,6 +692,20 @@
             if (savedNextId) {
                 nextEventId = parseInt(savedNextId);
             }
+            
+            const savedPomodoro = localStorage.getItem('pomodoroStats');
+            if (savedPomodoro) {
+                pomodoroStats = JSON.parse(savedPomodoro);
+                if (pomodoroStats.lastReset !== new Date().toDateString()) {
+                    pomodoroStats = {
+                        count: 0,
+                        workTime: 0,
+                        breakTime: 0,
+                        lastReset: new Date().toDateString()
+                    };
+                }
+            }
+            updatePomodoroStats();
         }
 
         function saveSettings() {
@@ -557,6 +717,202 @@
         function saveSchedules() {
             localStorage.setItem('molaSchedules', JSON.stringify(schedules));
             localStorage.setItem('molaNextId', nextEventId.toString());
+        }
+        
+        function savePomodoroStats() {
+            localStorage.setItem('pomodoroStats', JSON.stringify(pomodoroStats));
+        }
+        
+        function updatePomodoroStats() {
+            document.getElementById('pomodoroCount').textContent = pomodoroStats.count;
+            document.getElementById('totalWorkTime').textContent = pomodoroStats.workTime + 'dk';
+            document.getElementById('totalBreakTime').textContent = pomodoroStats.breakTime + 'dk';
+        }
+        
+        function togglePomodoro() {
+            if (pomodoroActive) {
+                stopPomodoro();
+            } else {
+                startPomodoro();
+            }
+        }
+        
+        function startPomodoro() {
+            pomodoroActive = true;
+            pomodoroEndTime = new Date(Date.now() + 25 * 60 * 1000);
+            document.getElementById('pomodoroBtn').textContent = '⏹️ Pomodoro Durdur';
+            document.getElementById('pomodoroStats').style.display = 'flex';
+            showAlert('🍅 Pomodoro başladı! 25 dakika çalışma zamanı');
+        }
+        
+        function stopPomodoro() {
+            pomodoroActive = false;
+            pomodoroEndTime = null;
+            document.getElementById('pomodoroBtn').textContent = '🍅 Pomodoro Başlat';
+            showAlert('⏹️ Pomodoro durduruldu');
+        }
+        
+        function extendBreak(minutes) {
+            extendedBreakTime += minutes;
+            showAlert(`⏱️ Mola ${minutes} dakika uzatıldı`);
+        }
+        
+        function skipBreak() {
+            extendedBreakTime = -999;
+            showAlert('⏭️ Mola/Toplantı atlandı');
+        }
+        
+        function postponeNextBreak() {
+            const next = getNextBreak();
+            if (!next || next.isActive) {
+                showAlert('⚠️ Şu anda ertelenecek bir mola yok');
+                return;
+            }
+            
+            const key = `${next.item.time}-${next.item.label}`;
+            postponedBreaks[key] = 5;
+            showAlert('⏸️ Bir sonraki mola 5 dakika ertelendi');
+        }
+        
+        function skipNextBreak() {
+            const next = getNextBreak();
+            if (!next || next.isActive) {
+                showAlert('⚠️ Şu anda atlanacak bir mola yok');
+                return;
+            }
+            
+            const key = `${next.item.time}-${next.item.label}-${new Date().toDateString()}`;
+            skippedBreaks.add(key);
+            showAlert('⏭️ Bir sonraki mola atlandı');
+        }
+        
+        function connectCalendar() {
+            showAlert('📅 Google Calendar entegrasyonu için ICS dosyası indiriliyor...');
+            
+            const icsContent = generateICS();
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mola-takvimi.ics';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            calendarConnected = true;
+            document.getElementById('calendarBtn').classList.add('connected');
+            document.getElementById('calendarBtn').innerHTML = '✅ Takvim Dosyası İndirildi';
+            document.getElementById('exportBtn').style.display = 'block';
+            
+            showAlert('✅ ICS dosyası indirildi! Google Calendar\'da "Ayarlar → İçe Aktar" ile ekleyebilirsin');
+        }
+        
+        function exportToCalendar() {
+            connectCalendar();
+        }
+        
+        function generateICS() {
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay() + 1);
+            
+            let ics = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Mola Takip//TR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Mola ve Toplantı Programı
+X-WR-TIMEZONE:Europe/Istanbul
+X-WR-CALDESC:Otomatik oluşturulan mola ve toplantı takvimi
+BEGIN:VTIMEZONE
+TZID:Europe/Istanbul
+BEGIN:STANDARD
+DTSTART:19701025T040000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+TZOFFSETFROM:+0300
+TZOFFSETTO:+0200
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:19700329T030000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0300
+END:DAYLIGHT
+END:VTIMEZONE
+`;
+            
+            for (let dayOffset = 0; dayOffset < 5; dayOffset++) {
+                const currentDate = new Date(weekStart);
+                currentDate.setDate(weekStart.getDate() + dayOffset);
+                const dayNum = currentDate.getDay();
+                
+                if (dayNum === 0 || dayNum === 6) continue;
+                
+                const daySchedule = schedules[dayNum] || [];
+                
+                daySchedule.forEach(item => {
+                    const [hours, minutes] = item.time.split(':');
+                    const startTime = new Date(currentDate);
+                    startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                    
+                    const endTime = new Date(startTime);
+                    endTime.setMinutes(endTime.getMinutes() + item.duration);
+                    
+                    const uid = `${item.id}-${dayNum}-${startTime.getTime()}@molatakip`;
+                    const emoji = item.type === 'break' ? '☕' : '📋';
+                    
+                    ics += `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${formatICSDate(now)}
+DTSTART;TZID=Europe/Istanbul:${formatICSDate(startTime)}
+DTEND;TZID=Europe/Istanbul:${formatICSDate(endTime)}
+SUMMARY:${emoji} ${item.label}
+DESCRIPTION:${item.type === 'break' ? 'Mola zamanı' : 'Toplantı'} - ${item.duration} dakika
+LOCATION:Mola Takip Uygulaması
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:${item.label} başlıyor
+TRIGGER:-PT${settings.notificationTime}M
+END:VALARM
+END:VEVENT
+`;
+                });
+            }
+            
+            ics += 'END:VCALENDAR';
+            return ics;
+        }
+        
+        function formatICSDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+        }
+        
+        function updateTimerControls(isActive, item) {
+            const controls = document.getElementById('timerControls');
+            
+            if (isActive && item) {
+                controls.innerHTML = `
+                    <button class="timer-btn extend" onclick="extendBreak(5)">➕ 5 Dakika Uzat</button>
+                    <button class="timer-btn skip" onclick="skipBreak()">⏭️ ${item.type === 'break' ? 'Molayı' : 'Toplantıyı'} Bitir</button>
+                `;
+            } else {
+                const nextBreak = getNextBreak();
+                if (nextBreak && !nextBreak.isActive) {
+                    controls.innerHTML = `
+                        <button class="timer-btn postpone" onclick="postponeNextBreak()">⏸️ 5 Dakika Ertele</button>
+                        <button class="timer-btn skip-next" onclick="skipNextBreak()">⏭️ Bir Sonrakini Atla</button>
+                    `;
+                } else {
+                    controls.innerHTML = '';
+                }
+            }
         }
 
         function showSettings() {
@@ -703,9 +1059,27 @@
         function getNextBreak() {
             const now = new Date();
             const schedule = getTodaySchedule();
+            const today = new Date().toDateString();
             
             for (let item of schedule) {
-                const breakTime = parseTime(item.time);
+                const key = `${item.time}-${item.label}-${today}`;
+                
+                // Atlanan molayı kontrol et
+                if (skippedBreaks.has(key)) {
+                    continue;
+                }
+                
+                let breakTime = parseTime(item.time);
+                
+                // Ertelenen molayı kontrol et
+                const postponeKey = `${item.time}-${item.label}`;
+                if (postponedBreaks[postponeKey]) {
+                    breakTime = new Date(breakTime.getTime() + postponedBreaks[postponeKey] * 60000);
+                    if (now >= breakTime) {
+                        delete postponedBreaks[postponeKey];
+                    }
+                }
+                
                 const endTime = new Date(breakTime.getTime() + item.duration * 60000);
                 
                 if (now < breakTime) {
@@ -720,6 +1094,46 @@
 
         function updateCountdown() {
             const now = new Date();
+            
+            // Pomodoro kontrolü
+            if (pomodoroActive && pomodoroEndTime) {
+                const diff = pomodoroEndTime - now;
+                
+                if (diff <= 0) {
+                    pomodoroStats.count++;
+                    pomodoroStats.workTime += 25;
+                    savePomodoroStats();
+                    updatePomodoroStats();
+                    
+                    stopPomodoro();
+                    showAlert('🎉 Pomodoro tamamlandı! 5 dakika mola zamanı');
+                    
+                    if (notificationPermission) {
+                        showNotification({
+                            label: 'Pomodoro tamamlandı',
+                            type: 'break',
+                            duration: 5
+                        });
+                    }
+                    
+                    pomodoroEndTime = new Date(Date.now() + 5 * 60 * 1000);
+                    document.getElementById('pomodoroBtn').textContent = '🍅 Pomodoro Başlat';
+                    return;
+                }
+                
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                
+                document.getElementById('countdownLabel').textContent = 'Pomodoro bitiyor';
+                document.getElementById('countdownTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('nextBreak').textContent = '25 dakika çalışma süresi';
+                document.getElementById('currentStatus').textContent = '🍅 Pomodoro Aktif';
+                document.getElementById('currentStatus').className = 'status pomodoro';
+                updateTimerControls(false, null);
+                return;
+            }
+            
             const next = getNextBreak();
             
             if (!next) {
@@ -727,13 +1141,30 @@
                 document.getElementById('nextBreak').textContent = 'Güzel çalıştın! 🎉';
                 document.getElementById('currentStatus').textContent = 'İş Saati Dışı';
                 document.getElementById('currentStatus').className = 'status work';
+                updateTimerControls(false, null);
                 return;
             }
 
             const { item, breakTime, isActive, endTime } = next;
             
             if (isActive) {
-                const diff = endTime - now;
+                const adjustedEndTime = new Date(endTime.getTime() + extendedBreakTime * 60000);
+                
+                if (extendedBreakTime === -999 || now >= adjustedEndTime) {
+                    extendedBreakTime = 0;
+                }
+                
+                const diff = adjustedEndTime - now;
+                
+                if (diff <= 0) {
+                    if (item.type === 'break') {
+                        pomodoroStats.breakTime += Math.floor((adjustedEndTime - breakTime) / 60000);
+                        savePomodoroStats();
+                        updatePomodoroStats();
+                    }
+                    return;
+                }
+                
                 const minutes = Math.floor(diff / 60000);
                 const seconds = Math.floor((diff % 60000) / 1000);
                 
@@ -745,6 +1176,7 @@
                 document.getElementById('currentStatus').textContent = 
                     item.type === 'break' ? '☕ Mola Zamanı' : '📋 Toplantıdasın';
                 document.getElementById('currentStatus').className = `status ${item.type}`;
+                updateTimerControls(true, item);
             } else {
                 const diff = breakTime - now;
                 const hours = Math.floor(diff / 3600000);
@@ -759,6 +1191,7 @@
                 document.getElementById('nextBreak').textContent = item.label + ' - ' + item.time;
                 document.getElementById('currentStatus').textContent = '💼 Çalışma Zamanı';
                 document.getElementById('currentStatus').className = 'status work';
+                updateTimerControls(false, null);
                 
                 const notifTime = settings.notificationTime * 60000;
                 if (notificationPermission && diff <= notifTime && diff > (notifTime - 5000)) {
