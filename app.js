@@ -940,3 +940,4 @@ END:VEVENT
         } else {
             console.log('Tarayıcı bildirimleri desteklemiyor');
         }
+}
