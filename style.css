@@ -1,534 +1,136 @@
-* {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #1f2937;
-        }
-        
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        
-        .current-time {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .countdown {
-            text-align: center;
-            padding: 30px 20px;
-        }
-        
-        .countdown-label {
-            font-size: 0.9em;
-            color: #6b7280;
-            margin-bottom: 10px;
-        }
-        
-        .countdown-time {
-            font-size: 3em;
-            font-weight: bold;
-            color: #6366f1;
-            margin-bottom: 10px;
-        }
-        
-        .next-break {
-            font-size: 1.1em;
-            color: #374151;
-        }
-        
-        .status {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 500;
-            margin-top: 10px;
-        }
-        
-        .status.break {
-            background: #dcfce7;
-            color: #166534;
-        }
-        
-        .status.meeting {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        
-        .status.work {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .status.pomodoro {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .timer-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .timer-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.9em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .timer-btn.extend {
-            background: #fbbf24;
-            color: #78350f;
-        }
-        
-        .timer-btn.skip {
-            background: #f87171;
-            color: #7f1d1d;
-        }
-        
-        .timer-btn.start {
-            background: #34d399;
-            color: #065f46;
-        }
-        
-        .timer-btn.postpone {
-            background: #a78bfa;
-            color: #4c1d95;
-        }
-        
-        .timer-btn.skip-next {
-            background: #fb923c;
-            color: #7c2d12;
-        }
-        
-        .calendar-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #e5e7eb;
-        }
-        
-        .calendar-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px;
-            background: #f3f4f6;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.95em;
-            transition: all 0.3s;
-        }
-        
-        .calendar-btn:hover {
-            background: #e5e7eb;
-        }
-        
-        .calendar-btn.connected {
-            background: #dcfce7;
-            color: #166534;
-        }
-        
-        .notes-section {
-            margin-top: 20px;
-            padding: 20px;
-            background: #fffbeb;
-            border-radius: 12px;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .notes-section h3 {
-            font-size: 1.1em;
-            margin-bottom: 10px;
-            color: #92400e;
-        }
-        
-        .notes-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 12px;
-            border: 2px solid #fbbf24;
-            border-radius: 8px;
-            font-size: 0.95em;
-            font-family: inherit;
-            resize: vertical;
-        }
-        
-        .notes-textarea:focus {
-            outline: none;
-            border-color: #f59e0b;
-        }
-        
-        .notes-info {
-            font-size: 0.85em;
-            color: #78350f;
-            margin-top: 8px;
-        }
-        
-        .notes-history {
-            margin-top: 20px;
-        }
-        
-        .note-item {
-            padding: 12px;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 3px solid #fbbf24;
-        }
-        
-        .note-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .note-title {
-            font-weight: 600;
-            color: #92400e;
-        }
-        
-        .note-date {
-            font-size: 0.8em;
-            color: #78350f;
-        }
-        
-        .note-content {
-            color: #451a03;
-            white-space: pre-wrap;
-            line-height: 1.5;
-        }
-        
-        .note-delete {
-            background: #fee;
-            border: none;
-            color: #dc2626;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
-        }
-        
-        .pomodoro-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            padding: 15px;
-            background: #f9fafb;
-            border-radius: 12px;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #6366f1;
-        }
-        
-        .stat-label {
-            font-size: 0.8em;
-            color: #6b7280;
-            margin-top: 5px;
-        }
-        
-        .schedule {
-            margin-top: 20px;
-        }
-        
-        .schedule-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 12px;
-            background: #f9fafb;
-            transition: all 0.3s;
-            position: relative;
-        }
-        
-        .schedule-item.active {
-            background: #eef2ff;
-            border-left: 4px solid #6366f1;
-        }
-        
-        .schedule-item.passed {
-            opacity: 0.5;
-        }
-        
-        .schedule-time {
-            font-weight: 600;
-            color: #6366f1;
-            min-width: 80px;
-            font-size: 0.9em;
-        }
-        
-        .schedule-label {
-            flex: 1;
-            color: #374151;
-            cursor: pointer;
-        }
-        
-        .icon {
-            margin-right: 10px;
-            font-size: 1.2em;
-        }
-        
-        .action-btns {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .edit-btn, .delete-btn {
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .edit-btn {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .delete-btn {
-            background: #fee;
-            color: #dc2626;
-        }
-        
-        .day-selector {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding: 5px 0;
-        }
-        
-        .day-btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 20px;
-            background: white;
-            color: #6366f1;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.3s;
-        }
-        
-        .day-btn.active {
-            background: #6366f1;
-            color: white;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        
-        .btn-primary {
-            background: #6366f1;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #4f46e5;
-        }
-        
-        .btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-        }
-        
-        .btn-secondary:hover {
-            background: #e5e7eb;
-        }
-        
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        
-        .btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #1f2937;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #374151;
-            font-weight: 500;
-        }
-        
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1em;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #6366f1;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .checkbox-item input {
-            width: auto;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .settings-icon {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 1.5em;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-        
-        .alert-message {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 2000;
-            display: none;
-            animation: slideDown 0.3s ease;
-        }
-        
-        .alert-message.show {
-            display: block;
-        }
-        
-        @keyframes slideDown {
-            from {
-                transform: translateX(-50%) translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
+.checklist-progress {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 0.9em;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.checklist-items {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+}
+
+.checklist-item:hover {
+    background: #f3f4f6;
+}
+
+.checklist-item.completed {
+    opacity: 0.6;
+}
+
+.checklist-item.completed .checklist-text {
+    text-decoration: line-through;
+    color: #9ca3af;
+}
+
+.checklist-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.checklist-text {
+    flex: 1;
+    color: #374151;
+    font-size: 0.95em;
+}
+
+.checklist-delete {
+    background: #fee;
+    border: none;
+    color: #dc2626;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1em;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.checklist-item:hover .checklist-delete {
+    opacity: 1;
+}
+
+.checklist-add {
+    display: flex;
+    gap: 10px;
+}
+
+.checklist-add input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95em;
+}
+
+.checklist-add input:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.btn-add {
+    width: 44px;
+    height: 44px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3em;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add:hover {
+    background: #4f46e5;
+}
+
+.btn-icon {
+    background: #fee;
+    border: none;
+    color: #dc2626;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: all 0.3s;
+}
+
+.btn-icon:hover {
+    background: #fecaca;
+}
