@@ -147,6 +147,28 @@
                 <button class="btn btn-primary" id="saveEventBtn" onclick="saveEvent()" style="flex: 1;">Kaydet</button>
             </div>
         </div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 1.3em;">📋 Görev Listesi</h2>
+                <button class="btn-icon" onclick="clearCompleted()" title="Tamamlananları Temizle">🗑️</button>
+            </div>
+            
+            <div class="checklist-progress" id="checklistProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                </div>
+                <div class="progress-text" id="progressText">0 / 0 tamamlandı</div>
+            </div>
+            
+            <div class="checklist-items" id="checklistItems">
+                <p style="text-align: center; color: #9ca3af; padding: 20px;">Henüz görev yok. Yukarıdan ekle!</p>
+            </div>
+            
+            <div class="checklist-add">
+                <input type="text" id="newTaskInput" placeholder="Yeni görev ekle..." onkeypress="if(event.key==='Enter') addTask()">
+                <button class="btn-add" onclick="addTask()">➕</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
