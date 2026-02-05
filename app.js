@@ -62,7 +62,7 @@ let postponedBreaks = {};
 let meetingNotes = {};
 let currentMeetingKey = null;
 
-let checklist = [];
+//let checklist = [];
 
 function showAlert(message) {
     const alertEl = document.getElementById('alertMessage');
@@ -823,7 +823,7 @@ function loadChecklist() {
     renderChecklist();
 }
 
-function saveChecklist() {
+function save() {
     localStorage.setItem('checklist', JSON.stringify(checklist));
 }
 
